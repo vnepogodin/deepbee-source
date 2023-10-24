@@ -24,6 +24,9 @@ import warnings
 warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "false"
+
 PATH_PRED_CORR = os.path.join(
     *list(PurePath("../annotations/predictions_corrected/").parts)
 )
@@ -124,14 +127,28 @@ def find_image_names():
                 l_images.append(full_path.replace(PATH_IMGS, ""))
     return l_images
 
+#def im_to_npy(x):
+#    print(PurePath(x).parts[-1].split(".")[:1][0] + ".npy")
+#    
+#    #os.path.join(
+#    #    os.path.join(*PurePath(x).parts[:-1]),
+#    os.path.join(PurePath(x).parts[-1].split(".")[:1][0] + ".npy")
+#    #)
 
 def get_images_predictions(folder_im, folder_npy, folder_npy_correct):
     images = find_image_names()
 
+    """
+    I get such error when I try to use the lambda function below:
+    TypeError: join() missing 1 required positional argument: 'a'
+    """
     im_to_npy = lambda x: os.path.join(
         os.path.join(*PurePath(x).parts[:-1]),
         PurePath(x).parts[-1].split(".")[:1][0] + ".npy",
     )
+    #im_to_npy = lambda x: os.path.join(PurePath(x).parts[-1].split(".")[:1][0] + ".npy")
+
+    im_to_npy = lambda x: PurePath(x).parts[-1].split(".")[:1][0] + ".npy"
 
     files_path = sorted(
         [
@@ -175,7 +192,7 @@ def create_dataset():
     random.shuffle(list_im_det)
 
     qt_h_conf = []
-    dict_classes = {i: np.array([], dtype=np.object) for i in LABELS}
+    dict_classes = {i: np.array([], dtype=np.object_) for i in LABELS}
     dict_all = np.array([])
 
     print("\nLoading detections...")
@@ -203,6 +220,7 @@ def create_dataset():
 
             t.update(1)
 
+    print(qt_h_conf)
     max_samples = min(min(qt_h_conf), MAX_SAMPLES_CLASS)
 
     for i, j in enumerate(dict_classes.items()):
@@ -310,10 +328,11 @@ def main():
     load_configs()
 
     print("\nCreating Dataset...\n")
+    print(PATH_IMGS)
     create_dataset()
 
-    print("\n\nTraining...\n\n")
-    train()
+    #print("\n\nTraining...\n\n")
+    #train()
     input("\nPress Enter to close...")
 
 
